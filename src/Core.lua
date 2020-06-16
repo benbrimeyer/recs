@@ -600,32 +600,37 @@ function Core:components(...)
         -- Since maps have no notion of size, we have to track it separately,
         -- but it should be pretty easy to do this sort of bookkeeping in
         -- addComponent and removeComponent, and it shouldn't desynchronize.
+
+        local hasSeenIt = {}
         for entityId, firstComponent in pairs(firstMap) do
-            local entityHasAllComponents = true
+            if not hasSeenIt[entityId] then
+                hasSeenIt[entityId] = true
+                local entityHasAllComponents = true
 
-            result[1] = entityId
-            result[2] = firstComponent
+                result[1] = entityId
+                result[2] = firstComponent
 
-            -- We don't need to iterate over any other map because we already
-            -- have a key to look up.
-            for i = 2, count do
-                local otherMap = componentMaps[i]
-                local otherComponent = otherMap[entityId]
+                -- We don't need to iterate over any other map because we already
+                -- have a key to look up.
+                for i = 2, count do
+                    local otherMap = componentMaps[i]
+                    local otherComponent = otherMap[entityId]
 
-                if otherComponent == nil then
-                    entityHasAllComponents = false
-                    -- No reason to continue looking; we already know this
-                    -- entity doesn't fit the criteria.
-                    break
-                else
-                    -- Increment i by 1, since index 1 is the entity ID.
-                    result[i + 1] = otherComponent
+                    if otherComponent == nil then
+                        entityHasAllComponents = false
+                        -- No reason to continue looking; we already know this
+                        -- entity doesn't fit the criteria.
+                        break
+                    else
+                        -- Increment i by 1, since index 1 is the entity ID.
+                        result[i + 1] = otherComponent
+                    end
                 end
-            end
 
-            -- Only yield the coroutine if we have a full results table.
-            if entityHasAllComponents then
-                coroutine.yield(unpack(result))
+                -- Only yield the coroutine if we have a full results table.
+                if entityHasAllComponents then
+                    coroutine.yield(unpack(result))
+                end
             end
         end
     end)
